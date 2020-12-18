@@ -7,7 +7,7 @@ import slash from 'slash'
 import filterRouteLocale from './filter-route-locale'
 
 function getLocaleFromFilename(name) {
-  const localeRegex = /\.([a-zA-Z-]+)?\.(mdx?|jsx?|json)$/
+  const localeRegex = /\.([a-zA-Z-]+)?\.(mdx?|jsx?|tsx?|json)$/
   const match = name.match(localeRegex)
   if (match) return match[1]
   return undefined
@@ -34,7 +34,7 @@ const parseJsonFile = (content, path) => {
 }
 
 async function getPageMap(currentResourcePath) {
-  const extension = /\.(mdx?|jsx?)$/
+  const extension = /\.(mdx?|jsx?|tsx?)$/
   const mdxExtension = /\.mdx?$/
   const metaExtension = /meta\.?([a-zA-Z-]+)?\.json/
   let activeRoute = ''
@@ -50,6 +50,10 @@ async function getPageMap(currentResourcePath) {
           const fileRoute = path.join(
             route,
             removeExtension(f.name).replace(/^index$/, '')
+          )
+          const nonMDFileRoute = path.join(
+            route,
+            f.name.replace(/\.[jt]sx?$/, '').replace(/^index$/, '')
           )
 
           if (filePath === currentResourcePath) {
@@ -83,7 +87,7 @@ async function getPageMap(currentResourcePath) {
 
             return {
               name: removeExtension(f.name),
-              route: fileRoute,
+              route: f.name.match(/\.[jt]sx?$/) ? nonMDFileRoute : fileRoute,
               locale: getLocaleFromFilename(f.name)
             }
           } else if (metaExtension.test(f.name)) {
@@ -117,7 +121,9 @@ async function getLocalizedEntries(currentResourcePath) {
   const filename = getFileName(currentResourcePath)
   const dir = path.dirname(currentResourcePath)
 
-  const fileRe = new RegExp('^' + filename + '.[a-zA-Z-]+.(mdx?|jsx?|json)$')
+  const fileRe = new RegExp(
+    '^' + filename + '.[a-zA-Z-]+.(mdx?|jsx?|tsx?|json)$'
+  )
 
   const files = await fs.readdir(dir, { withFileTypes: true })
   return files
